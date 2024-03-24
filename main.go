@@ -57,21 +57,27 @@ func main() {
 		time.Sleep(50 * time.Millisecond)
 
 		key := ReadInput(inputChan)
-		if key == "Rune[q]" {
-			screen.Fini()
-			os.Exit(0)
-		} else if key == "Rune[w]" {
-			player1.y--
+		HandleUserInput(key)
 
-		} else if key == "Rune[s]" {
-			player1.y++
-		} else if key == "Up" {
-			player2.y--
+	}
+}
 
-		} else if key == "Down" {
-			player2.y++
-		}
+func HandleUserInput(key string) {
+	_, screenHeight := screen.Size()
+	if key == "Rune[q]" {
+		screen.Fini()
+		os.Exit(0)
+	} else if key == "Rune[w]" && player1.y > 0 {
+		player1.y--
 
+	} else if key == "Rune[s]" && player1.y+player1.height < screenHeight {
+		//TODO: create a func called is paddle at boundaries
+		player1.y++
+	} else if key == "Up" && player2.y > 0 {
+		player2.y--
+
+	} else if key == "Down" && player2.y+player2.height < screenHeight {
+		player2.y++
 	}
 }
 
