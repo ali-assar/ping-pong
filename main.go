@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -20,6 +21,7 @@ type Paddle struct {
 var screen tcell.Screen
 var player1 *Paddle
 var player2 *Paddle
+var debugLog string
 
 func PrintString(x, y int, str string) {
 	for _, c := range str {
@@ -38,11 +40,9 @@ func Print(x, y, width, height int, ch rune) {
 
 func DrawState() {
 	screen.Clear()
-	InitGameState()
-
+	PrintString(0, 0, debugLog)
 	Print(player1.x, player1.y, player1.width, paddleHight, paddleSymbol)
 	Print(player2.x, player2.y, player2.width, paddleHight, paddleSymbol)
-
 	screen.Show()
 }
 
@@ -50,16 +50,28 @@ func DrawState() {
 func main() {
 	InitScreen()
 	InitGameState()
-	DrawState()
+	inputChan := InitUserInput()
 
 	for {
-		switch ev := screen.PollEvent().(type) {
-		case *tcell.EventKey:
-			if ev.Key() == tcell.KeyEnter {
-				screen.Fini()
-				os.Exit(0)
-			}
+		DrawState()
+		time.Sleep(50 * time.Millisecond)
+
+		key := ReadInput(inputChan)
+		if key == "Rune[q]" {
+			screen.Fini()
+			os.Exit(0)
+		} else if key == "Rune[w]" {
+			player1.y--
+
+		} else if key == "Rune[s]" {
+			player1.y++
+		} else if key == "Up" {
+			player2.y--
+
+		} else if key == "Down" {
+			player2.y++
 		}
+
 	}
 }
 
@@ -97,4 +109,27 @@ func InitGameState() {
 		width:  paddleWidth,
 		height: paddleHight,
 	}
+}
+
+func InitUserInput() chan string {
+	inputChan := make(chan string)
+	go func() {
+		for {
+			switch ev := screen.PollEvent().(type) {
+			case *tcell.EventKey:
+				inputChan <- ev.Name()
+			}
+		}
+	}()
+	return inputChan
+}
+
+func ReadInput(inputChan chan string) string {
+	var key string
+	select {
+	case key = <-inputChan:
+	default:
+		key = ""
+	}
+	return key
 }
