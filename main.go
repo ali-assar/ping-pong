@@ -12,16 +12,25 @@ const (
 	paddleHight  = 4
 	paddleWidth  = 1
 	paddleSymbol = 0x2588
+	ballSymbol   = 0x25CF
+
+	initialBallVelocityX = 1
+	initialBallVelocityY = 1
 )
 
-type Paddle struct {
-	x, y, width, height int
+type GameObject struct {
+	x, y, width, height  int
+	yVelocity, xVelocity int
+	symbol               rune
 }
 
 var screen tcell.Screen
-var player1 *Paddle
-var player2 *Paddle
+var player1 *GameObject
+var player2 *GameObject
+var ball *GameObject
 var debugLog string
+
+var gameObjects []*GameObject
 
 func PrintString(x, y int, str string) {
 	for _, c := range str {
@@ -38,11 +47,19 @@ func Print(x, y, width, height int, ch rune) {
 	}
 }
 
+func UpdateState() {
+	for i := range gameObjects {
+		gameObjects[i].x += gameObjects[i].xVelocity
+		gameObjects[i].y += gameObjects[i].yVelocity
+	}
+}
+
 func DrawState() {
 	screen.Clear()
 	PrintString(0, 0, debugLog)
-	Print(player1.x, player1.y, player1.width, paddleHight, paddleSymbol)
-	Print(player2.x, player2.y, player2.width, paddleHight, paddleSymbol)
+	for _, obj := range gameObjects {
+		Print(obj.x, obj.y, obj.width, obj.height, obj.symbol)
+	}
 	screen.Show()
 }
 
@@ -53,12 +70,11 @@ func main() {
 	inputChan := InitUserInput()
 
 	for {
+		HandleUserInput(ReadInput(inputChan))
+		UpdateState()
 		DrawState()
+
 		time.Sleep(50 * time.Millisecond)
-
-		key := ReadInput(inputChan)
-		HandleUserInput(key)
-
 	}
 }
 
@@ -103,17 +119,36 @@ func InitGameState() {
 	width, height := screen.Size()
 	paddleStart := height/2 - paddleHight/2
 
-	player1 = &Paddle{
-		x:      0,
-		y:      paddleStart,
-		width:  paddleWidth,
-		height: paddleHight,
+	player1 = &GameObject{
+		x:         0,
+		y:         paddleStart,
+		width:     paddleWidth,
+		height:    paddleHight,
+		symbol:    paddleSymbol,
+		yVelocity: 0,
+		xVelocity: 0,
 	}
-	player2 = &Paddle{
-		x:      width - 1,
-		y:      paddleStart,
-		width:  paddleWidth,
-		height: paddleHight,
+	player2 = &GameObject{
+		x:         width - 1,
+		y:         paddleStart,
+		width:     paddleWidth,
+		height:    paddleHight,
+		symbol:    paddleSymbol,
+		yVelocity: 0,
+		xVelocity: 0,
+	}
+
+	ball = &GameObject{
+		x:         width / 2,
+		y:         height / 2,
+		width:     1,
+		height:    1,
+		xVelocity: initialBallVelocityX,
+		yVelocity: initialBallVelocityY,
+		symbol:    ballSymbol,
+	}
+	gameObjects = []*GameObject{
+		player1, player2, ball,
 	}
 }
 
