@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	paddleHight  = 4
+	paddleHight  = 8
 	paddleWidth  = 1
 	paddleSymbol = 0x2588
 	ballSymbol   = 0x25CF
@@ -52,6 +52,14 @@ func UpdateState() {
 		gameObjects[i].x += gameObjects[i].xVelocity
 		gameObjects[i].y += gameObjects[i].yVelocity
 	}
+
+	if wallCollision(ball) {
+		ball.yVelocity = -ball.yVelocity
+	}
+
+	if paddleCollision(ball, player1) || paddleCollision(ball, player2) {
+		ball.xVelocity = -ball.xVelocity
+	}
 }
 
 func DrawState() {
@@ -61,6 +69,17 @@ func DrawState() {
 		Print(obj.x, obj.y, obj.width, obj.height, obj.symbol)
 	}
 	screen.Show()
+}
+
+func wallCollision(obj *GameObject) bool {
+	_, screenHeight := screen.Size()
+	return !(obj.y+obj.yVelocity >= 0 && obj.y+obj.yVelocity < screenHeight)
+}
+
+func paddleCollision(ball *GameObject, paddle *GameObject) bool {
+	return ball.x+ball.xVelocity == paddle.x &&
+		ball.y+ball.yVelocity >= paddle.y &&
+		ball.y+ball.yVelocity < paddle.y+paddle.height
 }
 
 // This program just prints "Hello, World!".  Press ESC to exit.
