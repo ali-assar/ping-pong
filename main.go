@@ -32,6 +32,11 @@ var debugLog string
 
 var gameObjects []*GameObject
 
+func PrintStringCentered(x, y int, str string) {
+	x = x - len(str)/2
+	PrintString(x, y, str)
+}
+
 func PrintString(x, y int, str string) {
 	for _, c := range str {
 		screen.SetContent(x, y, c, nil, tcell.StyleDefault)
@@ -78,8 +83,8 @@ func wallCollision(obj *GameObject) bool {
 
 func paddleCollision(ball *GameObject, paddle *GameObject) bool {
 	return ball.x+ball.xVelocity == paddle.x &&
-		ball.y+ball.yVelocity >= paddle.y &&
-		ball.y+ball.yVelocity < paddle.y+paddle.height
+		ball.y >= paddle.y &&
+		ball.y < paddle.y+paddle.height
 }
 
 // This program just prints "Hello, World!".  Press ESC to exit.
@@ -88,13 +93,21 @@ func main() {
 	InitGameState()
 	inputChan := InitUserInput()
 
-	for {
+	for !IsGameOver() {
 		HandleUserInput(ReadInput(inputChan))
 		UpdateState()
 		DrawState()
 
 		time.Sleep(50 * time.Millisecond)
 	}
+
+	screenWidth, screenHeight := screen.Size()
+	winner := GetWinner()
+	PrintStringCentered(screenHeight/2-1, screenWidth/2, "Game Over")
+	PrintStringCentered(screenHeight/2, screenWidth/2, fmt.Sprintf("%s wins...", winner))
+	screen.Show()
+	time.Sleep(3 * time.Second)
+	screen.Fini()
 }
 
 func HandleUserInput(key string) {
@@ -113,6 +126,21 @@ func HandleUserInput(key string) {
 
 	} else if key == "Down" && player2.y+player2.height < screenHeight {
 		player2.y++
+	}
+}
+
+func IsGameOver() bool {
+	return GetWinner() != ""
+}
+
+func GetWinner() string {
+	screenWidth, _ := screen.Size()
+	if ball.x < 0 {
+		return "Player 1"
+	} else if ball.x >= screenWidth {
+		return "Player 2"
+	} else {
+		return ""
 	}
 }
 
